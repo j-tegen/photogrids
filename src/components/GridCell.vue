@@ -357,6 +357,11 @@ function handleTouchEnd() {
   gap: 12px;
   opacity: 0;
   transition: opacity 0.2s;
+  pointer-events: none; /* Allow drag events to pass through to image */
+}
+
+.cell-overlay :deep(button) {
+  pointer-events: auto; /* Keep button clickable */
 }
 
 .grid-cell:hover .cell-overlay {
