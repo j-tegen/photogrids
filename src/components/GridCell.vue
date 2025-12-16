@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { computed, ref, onMounted, onUnmounted } from 'vue'
-import { Upload, Button, Spin, message } from 'ant-design-vue'
+import { computed, ref } from 'vue'
+import { Upload, Button, Spin } from 'ant-design-vue'
 import { PlusOutlined, DeleteOutlined, EditOutlined } from '@ant-design/icons-vue'
-import heic2any from 'heic2any'
 import type { GridCell } from '@/types/grid'
 import { useGridStore } from '@/stores/gridStore'
+import { processImageFile } from '@/utils/imageProcessing'
 
 const props = defineProps<{
   cell: GridCell
@@ -47,44 +47,6 @@ const borderStyle = computed(() => {
 
   return styles
 })
-
-async function processImageFile(file: File): Promise<{ file: File; url: string }> {
-  const isHeic =
-    file.type === 'image/heic' ||
-    file.type === 'image/heif' ||
-    file.name.toLowerCase().endsWith('.heic') ||
-    file.name.toLowerCase().endsWith('.heif')
-
-  if (isHeic) {
-    try {
-      const convertedBlob = await heic2any({
-        blob: file,
-        toType: 'image/jpeg',
-        quality: 0.9,
-      })
-      const blob = Array.isArray(convertedBlob) ? convertedBlob[0] : convertedBlob
-      if (!blob) {
-        throw new Error('Failed to convert HEIC image')
-      }
-      const convertedFile = new File([blob], file.name.replace(/\.heic$/i, '.jpg'), {
-        type: 'image/jpeg',
-      })
-      return {
-        file: convertedFile,
-        url: URL.createObjectURL(blob),
-      }
-    } catch (error) {
-      console.error('HEIC conversion failed:', error)
-      message.error('Could not convert HEIC file. Try converting to JPEG first, or use a different photo.')
-      throw error
-    }
-  }
-
-  return {
-    file,
-    url: URL.createObjectURL(file),
-  }
-}
 
 async function handleFileChange(event: Event) {
   const target = event.target as HTMLInputElement

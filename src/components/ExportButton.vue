@@ -1,16 +1,18 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { Button, Dropdown, Menu, message } from 'ant-design-vue'
-import { DownloadOutlined, DownOutlined } from '@ant-design/icons-vue'
+import { Button, message } from 'ant-design-vue'
+import { DownloadOutlined } from '@ant-design/icons-vue'
 import { toPng, toJpeg } from 'html-to-image'
+import type { ExportFormat } from '@/utils/splitterExport'
 
 const props = defineProps<{
   gridElement: HTMLElement | null
+  format: ExportFormat
 }>()
 
 const isExporting = ref(false)
 
-async function exportAs(format: 'png' | 'jpg') {
+async function handleExport() {
   if (!props.gridElement) {
     message.error('Grid element not found')
     return
@@ -26,7 +28,7 @@ async function exportAs(format: 'png' | 'jpg') {
 
     let dataUrl: string
 
-    if (format === 'png') {
+    if (props.format === 'png') {
       dataUrl = await toPng(gridElement, {
         quality: 1,
         pixelRatio: 2,
@@ -41,11 +43,11 @@ async function exportAs(format: 'png' | 'jpg') {
     // Create download link
     const link = document.createElement('a')
     const timestamp = new Date().toISOString().slice(0, 19).replace(/[:.]/g, '-')
-    link.download = `photo-grid-${timestamp}.${format}`
+    link.download = `photo-grid-${timestamp}.${props.format}`
     link.href = dataUrl
     link.click()
 
-    message.success(`Grid exported as ${format.toUpperCase()}`)
+    message.success(`Grid exported as ${props.format.toUpperCase()}`)
   } catch (error) {
     console.error('Export failed:', error)
     message.error('Failed to export grid')
@@ -53,24 +55,11 @@ async function exportAs(format: 'png' | 'jpg') {
     isExporting.value = false
   }
 }
-
-function handleMenuClick(info: { key: string | number }) {
-  exportAs(String(info.key) as 'png' | 'jpg')
-}
 </script>
 
 <template>
-  <Dropdown :trigger="['click']">
-    <Button type="primary" size="large" :loading="isExporting">
-      <template #icon><DownloadOutlined /></template>
-      Export
-      <DownOutlined />
-    </Button>
-    <template #overlay>
-      <Menu @click="handleMenuClick">
-        <Menu.Item key="png">Export as PNG</Menu.Item>
-        <Menu.Item key="jpg">Export as JPG</Menu.Item>
-      </Menu>
-    </template>
-  </Dropdown>
+  <Button type="primary" size="large" :loading="isExporting" @click="handleExport">
+    <template #icon><DownloadOutlined /></template>
+    Export {{ format.toUpperCase() }}
+  </Button>
 </template>

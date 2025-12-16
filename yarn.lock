@@ -1610,10 +1610,10 @@ has-flag@^4.0.0:
   resolved "https://registry.yarnpkg.com/has-flag/-/has-flag-4.0.0.tgz#944771fd9c81c81265c4d6941860da06bb59479b"
   integrity sha512-EykJT/Q1KjTWctppgIAgfSO0tKVuZUjhgMr17kqTumMl6Afv3EISleU7qZUzoXDFTAHTDC4NOoG/ZxU3EvlMPQ==
 
-heic2any@^0.0.4:
-  version "0.0.4"
-  resolved "https://registry.yarnpkg.com/heic2any/-/heic2any-0.0.4.tgz#eddb8e6fec53c8583a6e18b65069bb5e8d19028a"
-  integrity sha512-3lLnZiDELfabVH87htnRolZ2iehX9zwpRyGNz22GKXIu0fznlblf0/ftppXKNqS26dqFSeqfIBhAmAj/uSp0cA==
+heic-to@^1.3.0:
+  version "1.3.0"
+  resolved "https://registry.yarnpkg.com/heic-to/-/heic-to-1.3.0.tgz#ef99fbf915e28716a27e57e38a1fee4871c510f1"
+  integrity sha512-ptlhtnvVjhUu0aXhmp1Ic0iD7dFRGVGplwXu17odLogd1O+zFSvmMRMKKzAobYqMpkVXwbA1AlY+ZN49O3FJkQ==
 
 hookable@^5.5.3:
   version "5.5.3"
