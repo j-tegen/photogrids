@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, onMounted, onUnmounted } from 'vue'
 import { Upload, Button, Spin, message } from 'ant-design-vue'
-import { PlusOutlined, DeleteOutlined, EditOutlined, DragOutlined } from '@ant-design/icons-vue'
+import { PlusOutlined, DeleteOutlined, EditOutlined } from '@ant-design/icons-vue'
 import heic2any from 'heic2any'
 import type { GridCell } from '@/types/grid'
 import { useGridStore } from '@/stores/gridStore'
@@ -15,7 +15,6 @@ const props = defineProps<{
 const gridStore = useGridStore()
 const fileInputRef = ref<HTMLInputElement | null>(null)
 const isProcessing = ref(false)
-const isPositioning = ref(false)
 const isDragging = ref(false)
 const dragStart = ref({ x: 0, y: 0 })
 const positionStart = ref({ x: 50, y: 50 })
@@ -124,23 +123,12 @@ async function beforeUpload(file: File) {
   return false // Prevent default upload behavior
 }
 
-// Image positioning functions
+// Image positioning functions - always draggable
 const imageStyle = computed(() => ({
   objectPosition: `${props.cell.imagePosition.x}% ${props.cell.imagePosition.y}%`,
 }))
 
-function startPositioning() {
-  isPositioning.value = true
-  positionStart.value = { ...props.cell.imagePosition }
-}
-
-function stopPositioning() {
-  isPositioning.value = false
-  isDragging.value = false
-}
-
 function handlePositionMouseDown(event: MouseEvent) {
-  if (!isPositioning.value) return
   isDragging.value = true
   dragStart.value = { x: event.clientX, y: event.clientY }
   positionStart.value = { ...props.cell.imagePosition }
@@ -168,39 +156,58 @@ function handlePositionMouseUp() {
   isDragging.value = false
 }
 
-function handleKeyDown(event: KeyboardEvent) {
-  if (event.key === 'Escape' && isPositioning.value) {
-    stopPositioning()
-  }
+// Touch event handlers for mobile
+function handleTouchStart(event: TouchEvent) {
+  if (event.touches.length !== 1) return
+  const touch = event.touches[0]
+  if (!touch) return
+  isDragging.value = true
+  dragStart.value = { x: touch.clientX, y: touch.clientY }
+  positionStart.value = { ...props.cell.imagePosition }
 }
 
-onMounted(() => {
-  document.addEventListener('keydown', handleKeyDown)
-})
+function handleTouchMove(event: TouchEvent) {
+  if (!isDragging.value || !cellRef.value || event.touches.length !== 1) return
+  const touch = event.touches[0]
+  if (!touch) return
 
-onUnmounted(() => {
-  document.removeEventListener('keydown', handleKeyDown)
-})
+  const cellRect = cellRef.value.getBoundingClientRect()
+  const deltaX = touch.clientX - dragStart.value.x
+  const deltaY = touch.clientY - dragStart.value.y
+
+  const percentDeltaX = -(deltaX / cellRect.width) * 100
+  const percentDeltaY = -(deltaY / cellRect.height) * 100
+
+  const newX = positionStart.value.x + percentDeltaX
+  const newY = positionStart.value.y + percentDeltaY
+
+  gridStore.updateCellImagePosition(props.cell.id, newX, newY)
+  event.preventDefault() // Prevent scrolling while dragging
+}
+
+function handleTouchEnd() {
+  isDragging.value = false
+}
 </script>
 
 <template>
   <div
     ref="cellRef"
     class="grid-cell"
-    :class="{ 'is-positioning': isPositioning }"
     :style="{ ...cellStyle, ...borderStyle }"
     @mousemove="handlePositionMouseMove"
     @mouseup="handlePositionMouseUp"
     @mouseleave="handlePositionMouseUp"
+    @touchmove="handleTouchMove"
+    @touchend="handleTouchEnd"
   >
     <!-- Loading overlay -->
     <div v-if="isProcessing" class="loading-overlay">
       <Spin size="large" />
     </div>
 
-    <!-- Delete button - always visible on hover (hidden during positioning) -->
+    <!-- Delete button - always visible on mobile, hover on desktop -->
     <Button
-      v-if="!isPositioning"
       class="delete-btn"
       type="primary"
       danger
@@ -226,7 +233,7 @@ onUnmounted(() => {
       </Upload>
     </template>
 
-    <!-- Filled state: image with edit/position overlay -->
+    <!-- Filled state: image always draggable to reposition -->
     <template v-else>
       <img
         :src="cell.imageUrl"
@@ -235,24 +242,14 @@ onUnmounted(() => {
         :style="imageStyle"
         :class="{ 'is-dragging': isDragging }"
         @mousedown="handlePositionMouseDown"
+        @touchstart="handleTouchStart"
       />
 
-      <!-- Normal overlay with buttons -->
-      <div v-if="!isPositioning" class="cell-overlay">
+      <!-- Overlay with replace image button -->
+      <div class="cell-overlay">
         <Button type="primary" shape="circle" @click="triggerFileInput">
           <template #icon><EditOutlined /></template>
         </Button>
-        <Button type="primary" shape="circle" @click="startPositioning">
-          <template #icon><DragOutlined /></template>
-        </Button>
-      </div>
-
-      <!-- Positioning mode overlay -->
-      <div v-else class="position-overlay" @click="stopPositioning">
-        <div class="position-instructions" @click.stop>
-          Drag to reposition
-          <Button size="small" @click="stopPositioning">Done</Button>
-        </div>
       </div>
 
       <input
@@ -286,8 +283,18 @@ onUnmounted(() => {
   transition: opacity 0.2s;
 }
 
-.grid-cell:hover .delete-btn {
-  opacity: 1;
+/* Desktop: show on hover */
+@media (min-width: 768px) {
+  .grid-cell:hover .delete-btn {
+    opacity: 1;
+  }
+}
+
+/* Mobile: always visible but subtle */
+@media (max-width: 767px) {
+  .delete-btn {
+    opacity: 0.7;
+  }
 }
 
 .upload-dragger {
@@ -332,6 +339,12 @@ onUnmounted(() => {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  cursor: grab;
+  touch-action: none; /* Prevent scrolling when dragging on mobile */
+}
+
+.cell-image.is-dragging {
+  cursor: grabbing;
 }
 
 .cell-overlay {
@@ -364,38 +377,4 @@ onUnmounted(() => {
   z-index: 20;
 }
 
-/* Positioning mode styles */
-.grid-cell.is-positioning {
-  cursor: grab;
-}
-
-.grid-cell.is-positioning .cell-image {
-  cursor: grab;
-}
-
-.grid-cell.is-positioning .cell-image.is-dragging {
-  cursor: grabbing;
-}
-
-.position-overlay {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  padding-bottom: 12px;
-  pointer-events: none;
-}
-
-.position-instructions {
-  background-color: rgba(0, 0, 0, 0.7);
-  color: white;
-  padding: 8px 16px;
-  border-radius: 4px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  font-size: 13px;
-  pointer-events: auto;
-}
 </style>
