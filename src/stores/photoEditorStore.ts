@@ -9,16 +9,12 @@ import type {
   CurvePoint,
   FilterName,
 } from '@/types/editor'
-import {
-  DEFAULT_ADJUSTMENTS,
-  DEFAULT_CURVES,
-  DEFAULT_FILTERS,
-} from '@/types/editor'
+import { DEFAULT_ADJUSTMENTS, DEFAULT_CURVES, DEFAULT_FILTERS } from '@/types/editor'
 
 export type CropAspectRatio = 'free' | '1:1' | '16:9' | '9:16' | '4:3' | '3:4' | '3:2' | '2:3'
 
 export const ASPECT_RATIO_VALUES: Record<CropAspectRatio, number | null> = {
-  'free': null,
+  free: null,
   '1:1': 1,
   '16:9': 16 / 9,
   '9:16': 9 / 16,

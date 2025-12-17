@@ -1,16 +1,16 @@
 import type { Rotation, CropArea } from './splitter'
 
 export interface Adjustments {
-  exposure: number      // -100 to 100
-  saturation: number    // -100 to 100
-  brilliance: number    // -100 to 100
-  shadows: number       // -100 to 100
-  sharpness: number     // 0 to 100
+  exposure: number // -100 to 100
+  saturation: number // -100 to 100
+  brilliance: number // -100 to 100
+  shadows: number // -100 to 100
+  sharpness: number // 0 to 100
 }
 
 export interface CurvePoint {
-  x: number  // 0-255
-  y: number  // 0-255
+  x: number // 0-255
+  y: number // 0-255
 }
 
 export interface ColorCurves {
@@ -31,17 +31,17 @@ export interface Point2D {
 export type CropDragType = 'move' | 'n' | 's' | 'e' | 'w' | 'ne' | 'nw' | 'se' | 'sw'
 
 export interface FilterSettings {
-  vintage: number       // 0-100
+  vintage: number // 0-100
   blackAndWhite: number // 0-100
-  sepia: number         // 0-100
-  warm: number          // 0-100
-  cool: number          // 0-100
-  fade: number          // 0-100
-  vignette: number      // 0-100
-  grain: number         // 0-100
-  blur: number          // 0-100
-  invert: number        // 0-100
-  posterize: number     // 0-100
+  sepia: number // 0-100
+  warm: number // 0-100
+  cool: number // 0-100
+  fade: number // 0-100
+  vignette: number // 0-100
+  grain: number // 0-100
+  blur: number // 0-100
+  invert: number // 0-100
+  posterize: number // 0-100
 }
 
 export type FilterName = keyof FilterSettings
@@ -62,10 +62,22 @@ export const DEFAULT_ADJUSTMENTS: Adjustments = {
 }
 
 export const DEFAULT_CURVES: ColorCurves = {
-  rgb: [{ x: 0, y: 0 }, { x: 255, y: 255 }],
-  red: [{ x: 0, y: 0 }, { x: 255, y: 255 }],
-  green: [{ x: 0, y: 0 }, { x: 255, y: 255 }],
-  blue: [{ x: 0, y: 0 }, { x: 255, y: 255 }],
+  rgb: [
+    { x: 0, y: 0 },
+    { x: 255, y: 255 },
+  ],
+  red: [
+    { x: 0, y: 0 },
+    { x: 255, y: 255 },
+  ],
+  green: [
+    { x: 0, y: 0 },
+    { x: 255, y: 255 },
+  ],
+  blue: [
+    { x: 0, y: 0 },
+    { x: 255, y: 255 },
+  ],
 }
 
 export const DEFAULT_FILTERS: FilterSettings = {

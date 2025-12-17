@@ -12,7 +12,7 @@ function isMobileDevice(): boolean {
 export async function downloadImage(
   dataUrl: string,
   filename: string,
-  mimeType: 'image/png' | 'image/jpeg'
+  mimeType: 'image/png' | 'image/jpeg',
 ): Promise<void> {
   // Convert data URL to blob
   const response = await fetch(dataUrl)

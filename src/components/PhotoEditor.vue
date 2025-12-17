@@ -1,6 +1,19 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
-import { Upload, Button, Slider, Collapse, Card, Space, Tag, Dropdown, Menu, Switch, Segmented, message } from 'ant-design-vue'
+import {
+  Upload,
+  Button,
+  Slider,
+  Collapse,
+  Card,
+  Space,
+  Tag,
+  Dropdown,
+  Menu,
+  Switch,
+  Segmented,
+  message,
+} from 'ant-design-vue'
 import {
   UploadOutlined,
   RotateLeftOutlined,
@@ -12,9 +25,19 @@ import {
   FullscreenOutlined,
   CloseOutlined,
 } from '@ant-design/icons-vue'
-import { usePhotoEditorStore, ASPECT_RATIO_VALUES, type CropAspectRatio } from '@/stores/photoEditorStore'
+import {
+  usePhotoEditorStore,
+  ASPECT_RATIO_VALUES,
+  type CropAspectRatio,
+} from '@/stores/photoEditorStore'
 import { processImageFile } from '@/utils/imageProcessing'
-import { FILTER_LABELS, DEFAULT_CURVES, type FilterName, type CropDragType, type Point2D } from '@/types/editor'
+import {
+  FILTER_LABELS,
+  DEFAULT_CURVES,
+  type FilterName,
+  type CropDragType,
+  type Point2D,
+} from '@/types/editor'
 import type { ExportFormat } from '@/utils/splitterExport'
 import { downloadImage } from '@/utils/downloadImage'
 import { MIN_SPLIT_COUNT, MAX_SPLIT_COUNT } from '@/types/splitter'
@@ -245,7 +268,7 @@ watch(
       resizeObserver.observe(container)
     }
   },
-  { immediate: true }
+  { immediate: true },
 )
 
 // Watch rotation changes to update bounds
@@ -256,7 +279,7 @@ watch(
       updateImageBounds()
       constrainCropToImageBounds()
     }
-  }
+  },
 )
 
 const imageTransformStyle = computed(() => ({
@@ -439,7 +462,10 @@ function handleZoomChange(value: number | [number, number]) {
   }
 }
 
-function handleAdjustmentChange(key: keyof typeof editorStore.adjustments, value: number | [number, number]) {
+function handleAdjustmentChange(
+  key: keyof typeof editorStore.adjustments,
+  value: number | [number, number],
+) {
   if (typeof value === 'number') {
     editorStore.setAdjustment(key, value)
   }
@@ -501,13 +527,16 @@ function handleCropDragFreeEdge(
   type: CropDragType,
   delta: Point2D,
   start: CropArea,
-  bounds: CropBounds
+  bounds: CropBounds,
 ): CropArea {
   const crop = { ...start }
 
   switch (type) {
     case 'n':
-      crop.y = Math.max(bounds.minY, Math.min(start.y + start.height - MIN_CROP_SIZE, start.y + delta.y))
+      crop.y = Math.max(
+        bounds.minY,
+        Math.min(start.y + start.height - MIN_CROP_SIZE, start.y + delta.y),
+      )
       crop.height = start.height - (crop.y - start.y)
       break
     case 's':
@@ -517,18 +546,30 @@ function handleCropDragFreeEdge(
       crop.width = Math.max(MIN_CROP_SIZE, Math.min(bounds.maxX - start.x, start.width + delta.x))
       break
     case 'w':
-      crop.x = Math.max(bounds.minX, Math.min(start.x + start.width - MIN_CROP_SIZE, start.x + delta.x))
+      crop.x = Math.max(
+        bounds.minX,
+        Math.min(start.x + start.width - MIN_CROP_SIZE, start.x + delta.x),
+      )
       crop.width = start.width - (crop.x - start.x)
       break
     case 'ne':
-      crop.y = Math.max(bounds.minY, Math.min(start.y + start.height - MIN_CROP_SIZE, start.y + delta.y))
+      crop.y = Math.max(
+        bounds.minY,
+        Math.min(start.y + start.height - MIN_CROP_SIZE, start.y + delta.y),
+      )
       crop.height = start.height - (crop.y - start.y)
       crop.width = Math.max(MIN_CROP_SIZE, Math.min(bounds.maxX - start.x, start.width + delta.x))
       break
     case 'nw':
-      crop.y = Math.max(bounds.minY, Math.min(start.y + start.height - MIN_CROP_SIZE, start.y + delta.y))
+      crop.y = Math.max(
+        bounds.minY,
+        Math.min(start.y + start.height - MIN_CROP_SIZE, start.y + delta.y),
+      )
       crop.height = start.height - (crop.y - start.y)
-      crop.x = Math.max(bounds.minX, Math.min(start.x + start.width - MIN_CROP_SIZE, start.x + delta.x))
+      crop.x = Math.max(
+        bounds.minX,
+        Math.min(start.x + start.width - MIN_CROP_SIZE, start.x + delta.x),
+      )
       crop.width = start.width - (crop.x - start.x)
       break
     case 'se':
@@ -537,7 +578,10 @@ function handleCropDragFreeEdge(
       break
     case 'sw':
       crop.height = Math.max(MIN_CROP_SIZE, Math.min(bounds.maxY - start.y, start.height + delta.y))
-      crop.x = Math.max(bounds.minX, Math.min(start.x + start.width - MIN_CROP_SIZE, start.x + delta.x))
+      crop.x = Math.max(
+        bounds.minX,
+        Math.min(start.x + start.width - MIN_CROP_SIZE, start.x + delta.x),
+      )
       crop.width = start.width - (crop.x - start.x)
       break
   }
@@ -551,7 +595,7 @@ function handleCropDragLockedVertical(
   delta: Point2D,
   start: CropArea,
   bounds: CropBounds,
-  ratio: number
+  ratio: number,
 ): CropArea {
   const crop = { ...start }
   const heightChange = type === 'n' ? -delta.y : delta.y
@@ -581,7 +625,7 @@ function handleCropDragLockedHorizontal(
   delta: Point2D,
   start: CropArea,
   bounds: CropBounds,
-  ratio: number
+  ratio: number,
 ): CropArea {
   const crop = { ...start }
   const widthChange = type === 'w' ? -delta.x : delta.x
@@ -611,7 +655,7 @@ function handleCropDragLockedCorner(
   delta: Point2D,
   start: CropArea,
   bounds: CropBounds,
-  ratio: number
+  ratio: number,
 ): CropArea {
   const crop = { ...start }
   const absDeltaX = Math.abs(delta.x)
@@ -619,15 +663,13 @@ function handleCropDragLockedCorner(
 
   // Use diagonal distance - pick the larger delta as driver
   const diagonalDelta = absDeltaX > absDeltaY ? delta.x : delta.y * ratio
-  const sign = (type === 'se' || type === 'ne') ? 1 : -1
+  const sign = type === 'se' || type === 'ne' ? 1 : -1
 
   let newWidth = Math.max(MIN_CROP_SIZE, start.width + diagonalDelta * sign)
   let newHeight = newWidth / ratio
 
   // Calculate max dimensions based on anchor corner
-  const maxWidth = type.includes('w')
-    ? start.x + start.width - bounds.minX
-    : bounds.maxX - start.x
+  const maxWidth = type.includes('w') ? start.x + start.width - bounds.minX : bounds.maxX - start.x
   const maxHeight = type.includes('n')
     ? start.y + start.height - bounds.minY
     : bounds.maxY - start.y
@@ -805,8 +847,14 @@ async function handleExport() {
     ctx.translate(canvas.width / 2, canvas.height / 2)
     ctx.rotate((editorStore.rotation * Math.PI) / 180)
     ctx.scale(editorStore.zoom, editorStore.zoom)
-    const drawX = -img.naturalWidth / 2 + (editorStore.position.x / 100) * img.naturalWidth - srcX / editorStore.zoom
-    const drawY = -img.naturalHeight / 2 + (editorStore.position.y / 100) * img.naturalHeight - srcY / editorStore.zoom
+    const drawX =
+      -img.naturalWidth / 2 +
+      (editorStore.position.x / 100) * img.naturalWidth -
+      srcX / editorStore.zoom
+    const drawY =
+      -img.naturalHeight / 2 +
+      (editorStore.position.y / 100) * img.naturalHeight -
+      srcY / editorStore.zoom
     ctx.drawImage(img, drawX, drawY)
     ctx.restore()
 
@@ -852,9 +900,23 @@ async function handleExport() {
         sliceCanvas.width = sliceWidth
         sliceCanvas.height = canvas.height
         const sliceCtx = sliceCanvas.getContext('2d')!
-        sliceCtx.drawImage(canvas, i * sliceWidth, 0, sliceWidth, canvas.height, 0, 0, sliceWidth, canvas.height)
+        sliceCtx.drawImage(
+          canvas,
+          i * sliceWidth,
+          0,
+          sliceWidth,
+          canvas.height,
+          0,
+          0,
+          sliceWidth,
+          canvas.height,
+        )
         const sliceDataUrl = sliceCanvas.toDataURL(mimeType, quality)
-        await downloadImage(sliceDataUrl, `photo-edit-${i + 1}-${timestamp}.${props.exportFormat}`, mimeType)
+        await downloadImage(
+          sliceDataUrl,
+          `photo-edit-${i + 1}-${timestamp}.${props.exportFormat}`,
+          mimeType,
+        )
         if (i < splitCount.value - 1) {
           await new Promise((resolve) => setTimeout(resolve, 300))
         }
@@ -891,7 +953,7 @@ defineExpose({
 <template>
   <div class="photo-editor">
     <!-- SVG Filters for Curves, Grain, and Posterize -->
-    <svg width="0" height="0" style="position: absolute; pointer-events: none;">
+    <svg width="0" height="0" style="position: absolute; pointer-events: none">
       <defs>
         <filter id="curve-filter" color-interpolation-filters="sRGB">
           <feComponentTransfer>
@@ -902,7 +964,13 @@ defineExpose({
         </filter>
         <!-- Grain filter using turbulence -->
         <filter id="grain-filter" x="0%" y="0%" width="100%" height="100%">
-          <feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="4" stitchTiles="stitch" result="noise" />
+          <feTurbulence
+            type="fractalNoise"
+            baseFrequency="0.8"
+            numOctaves="4"
+            stitchTiles="stitch"
+            result="noise"
+          />
           <feColorMatrix type="saturate" values="0" in="noise" result="mono" />
           <feBlend in="SourceGraphic" in2="mono" mode="overlay" />
         </filter>
@@ -931,17 +999,11 @@ defineExpose({
           </Button>
         </Upload>
 
-        <Button
-          :disabled="!editorStore.hasImage"
-          @click="editorStore.rotateCounterClockwise"
-        >
+        <Button :disabled="!editorStore.hasImage" @click="editorStore.rotateCounterClockwise">
           <template #icon><RotateLeftOutlined /></template>
         </Button>
 
-        <Button
-          :disabled="!editorStore.hasImage"
-          @click="editorStore.rotateClockwise"
-        >
+        <Button :disabled="!editorStore.hasImage" @click="editorStore.rotateClockwise">
           <template #icon><RotateRightOutlined /></template>
         </Button>
 
@@ -993,10 +1055,7 @@ defineExpose({
     <div class="editor-body">
       <!-- Image Preview -->
       <Card class="preview-card">
-        <div
-          v-if="!editorStore.hasImage"
-          class="upload-placeholder"
-        >
+        <div v-if="!editorStore.hasImage" class="upload-placeholder">
           <Upload
             :show-upload-list="false"
             :before-upload="beforeUpload"
@@ -1031,15 +1090,51 @@ defineExpose({
           <!-- Crop Area Overlay -->
           <div class="crop-overlay">
             <div class="crop-area" :style="cropAreaStyle">
-              <div class="crop-handle n" @mousedown="(e) => startCropDrag(e, 'n')" @touchstart="(e) => startCropDrag(e, 'n')" />
-              <div class="crop-handle s" @mousedown="(e) => startCropDrag(e, 's')" @touchstart="(e) => startCropDrag(e, 's')" />
-              <div class="crop-handle e" @mousedown="(e) => startCropDrag(e, 'e')" @touchstart="(e) => startCropDrag(e, 'e')" />
-              <div class="crop-handle w" @mousedown="(e) => startCropDrag(e, 'w')" @touchstart="(e) => startCropDrag(e, 'w')" />
-              <div class="crop-handle ne" @mousedown="(e) => startCropDrag(e, 'ne')" @touchstart="(e) => startCropDrag(e, 'ne')" />
-              <div class="crop-handle nw" @mousedown="(e) => startCropDrag(e, 'nw')" @touchstart="(e) => startCropDrag(e, 'nw')" />
-              <div class="crop-handle se" @mousedown="(e) => startCropDrag(e, 'se')" @touchstart="(e) => startCropDrag(e, 'se')" />
-              <div class="crop-handle sw" @mousedown="(e) => startCropDrag(e, 'sw')" @touchstart="(e) => startCropDrag(e, 'sw')" />
-              <div class="crop-move" @mousedown="(e) => startCropDrag(e, 'move')" @touchstart="(e) => startCropDrag(e, 'move')" />
+              <div
+                class="crop-handle n"
+                @mousedown="(e) => startCropDrag(e, 'n')"
+                @touchstart="(e) => startCropDrag(e, 'n')"
+              />
+              <div
+                class="crop-handle s"
+                @mousedown="(e) => startCropDrag(e, 's')"
+                @touchstart="(e) => startCropDrag(e, 's')"
+              />
+              <div
+                class="crop-handle e"
+                @mousedown="(e) => startCropDrag(e, 'e')"
+                @touchstart="(e) => startCropDrag(e, 'e')"
+              />
+              <div
+                class="crop-handle w"
+                @mousedown="(e) => startCropDrag(e, 'w')"
+                @touchstart="(e) => startCropDrag(e, 'w')"
+              />
+              <div
+                class="crop-handle ne"
+                @mousedown="(e) => startCropDrag(e, 'ne')"
+                @touchstart="(e) => startCropDrag(e, 'ne')"
+              />
+              <div
+                class="crop-handle nw"
+                @mousedown="(e) => startCropDrag(e, 'nw')"
+                @touchstart="(e) => startCropDrag(e, 'nw')"
+              />
+              <div
+                class="crop-handle se"
+                @mousedown="(e) => startCropDrag(e, 'se')"
+                @touchstart="(e) => startCropDrag(e, 'se')"
+              />
+              <div
+                class="crop-handle sw"
+                @mousedown="(e) => startCropDrag(e, 'sw')"
+                @touchstart="(e) => startCropDrag(e, 'sw')"
+              />
+              <div
+                class="crop-move"
+                @mousedown="(e) => startCropDrag(e, 'move')"
+                @touchstart="(e) => startCropDrag(e, 'move')"
+              />
               <!-- Split lines preview -->
               <div
                 v-for="(linePos, index) in splitLines"
@@ -1058,11 +1153,7 @@ defineExpose({
           <!-- Adjustments -->
           <Collapse.Panel key="adjustments" header="Adjustments">
             <div class="slider-group">
-              <div
-                v-for="slider in adjustmentSliders"
-                :key="slider.key"
-                class="slider-row"
-              >
+              <div v-for="slider in adjustmentSliders" :key="slider.key" class="slider-row">
                 <span class="slider-label">{{ slider.label }}</span>
                 <Slider
                   :value="editorStore.adjustments[slider.key]"
@@ -1081,7 +1172,9 @@ defineExpose({
           <!-- Curves -->
           <Collapse.Panel key="curves" header="Curves">
             <CurveEditor :disabled="!editorStore.hasImage" />
-            <Button size="small" style="margin-top: 12px" @click="editorStore.resetCurves">Reset Curves</Button>
+            <Button size="small" style="margin-top: 12px" @click="editorStore.resetCurves"
+              >Reset Curves</Button
+            >
           </Collapse.Panel>
 
           <!-- Filters -->
@@ -1117,7 +1210,9 @@ defineExpose({
               </div>
             </div>
 
-            <Button size="small" style="margin-top: 12px" @click="editorStore.resetFilters">Reset Filters</Button>
+            <Button size="small" style="margin-top: 12px" @click="editorStore.resetFilters"
+              >Reset Filters</Button
+            >
           </Collapse.Panel>
 
           <!-- Split Photo -->
@@ -1257,7 +1352,7 @@ defineExpose({
 
 .image-container {
   position: relative;
-  overflow: hidden;
+  overflow: clip; /* Use clip instead of hidden to allow crop handles to be touchable at edges */
   aspect-ratio: 1 / 1;
   width: 100%;
   max-height: 75vh;
@@ -1315,14 +1410,50 @@ defineExpose({
   touch-action: none;
 }
 
-.crop-handle.n { top: -8px; left: 50%; transform: translateX(-50%); cursor: n-resize; }
-.crop-handle.s { bottom: -8px; left: 50%; transform: translateX(-50%); cursor: s-resize; }
-.crop-handle.e { right: -8px; top: 50%; transform: translateY(-50%); cursor: e-resize; }
-.crop-handle.w { left: -8px; top: 50%; transform: translateY(-50%); cursor: w-resize; }
-.crop-handle.ne { top: -8px; right: -8px; cursor: ne-resize; }
-.crop-handle.nw { top: -8px; left: -8px; cursor: nw-resize; }
-.crop-handle.se { bottom: -8px; right: -8px; cursor: se-resize; }
-.crop-handle.sw { bottom: -8px; left: -8px; cursor: sw-resize; }
+.crop-handle.n {
+  top: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  cursor: n-resize;
+}
+.crop-handle.s {
+  bottom: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  cursor: s-resize;
+}
+.crop-handle.e {
+  right: -8px;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: e-resize;
+}
+.crop-handle.w {
+  left: -8px;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: w-resize;
+}
+.crop-handle.ne {
+  top: -8px;
+  right: -8px;
+  cursor: ne-resize;
+}
+.crop-handle.nw {
+  top: -8px;
+  left: -8px;
+  cursor: nw-resize;
+}
+.crop-handle.se {
+  bottom: -8px;
+  right: -8px;
+  cursor: se-resize;
+}
+.crop-handle.sw {
+  bottom: -8px;
+  left: -8px;
+  cursor: sw-resize;
+}
 
 .crop-move {
   position: absolute;
@@ -1433,14 +1564,34 @@ defineExpose({
     height: 24px;
   }
 
-  .crop-handle.n { top: -12px; }
-  .crop-handle.s { bottom: -12px; }
-  .crop-handle.e { right: -12px; }
-  .crop-handle.w { left: -12px; }
-  .crop-handle.ne { top: -12px; right: -12px; }
-  .crop-handle.nw { top: -12px; left: -12px; }
-  .crop-handle.se { bottom: -12px; right: -12px; }
-  .crop-handle.sw { bottom: -12px; left: -12px; }
+  .crop-handle.n {
+    top: -12px;
+  }
+  .crop-handle.s {
+    bottom: -12px;
+  }
+  .crop-handle.e {
+    right: -12px;
+  }
+  .crop-handle.w {
+    left: -12px;
+  }
+  .crop-handle.ne {
+    top: -12px;
+    right: -12px;
+  }
+  .crop-handle.nw {
+    top: -12px;
+    left: -12px;
+  }
+  .crop-handle.se {
+    bottom: -12px;
+    right: -12px;
+  }
+  .crop-handle.sw {
+    bottom: -12px;
+    left: -12px;
+  }
 }
 </style>
 

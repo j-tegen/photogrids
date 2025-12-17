@@ -46,21 +46,14 @@ function createTransformedCanvas(
   const offsetY = (position.y / 100) * image.naturalHeight
 
   // Draw image centered
-  ctx.drawImage(
-    image,
-    -image.naturalWidth / 2 + offsetX,
-    -image.naturalHeight / 2 + offsetY,
-  )
+  ctx.drawImage(image, -image.naturalWidth / 2 + offsetX, -image.naturalHeight / 2 + offsetY)
 
   ctx.restore()
 
   return canvas
 }
 
-function cropCanvas(
-  sourceCanvas: HTMLCanvasElement,
-  cropArea: CropArea,
-): HTMLCanvasElement {
+function cropCanvas(sourceCanvas: HTMLCanvasElement, cropArea: CropArea): HTMLCanvasElement {
   const canvas = document.createElement('canvas')
   const ctx = canvas.getContext('2d')!
 
@@ -73,25 +66,12 @@ function cropCanvas(
   canvas.width = cropWidth
   canvas.height = cropHeight
 
-  ctx.drawImage(
-    sourceCanvas,
-    cropX,
-    cropY,
-    cropWidth,
-    cropHeight,
-    0,
-    0,
-    cropWidth,
-    cropHeight,
-  )
+  ctx.drawImage(sourceCanvas, cropX, cropY, cropWidth, cropHeight, 0, 0, cropWidth, cropHeight)
 
   return canvas
 }
 
-function splitCanvas(
-  sourceCanvas: HTMLCanvasElement,
-  splitCount: number,
-): HTMLCanvasElement[] {
+function splitCanvas(sourceCanvas: HTMLCanvasElement, splitCount: number): HTMLCanvasElement[] {
   const slices: HTMLCanvasElement[] = []
   const sliceWidth = sourceCanvas.width / splitCount
 
@@ -120,7 +100,11 @@ function splitCanvas(
   return slices
 }
 
-async function downloadCanvas(canvas: HTMLCanvasElement, filename: string, format: ExportFormat): Promise<void> {
+async function downloadCanvas(
+  canvas: HTMLCanvasElement,
+  filename: string,
+  format: ExportFormat,
+): Promise<void> {
   const mimeType = format === 'png' ? 'image/png' : 'image/jpeg'
   const dataUrl = canvas.toDataURL(mimeType, format === 'jpg' ? 0.95 : 1)
   await downloadImage(dataUrl, filename, mimeType)

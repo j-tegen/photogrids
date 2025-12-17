@@ -8,7 +8,7 @@ import { generateLUT } from './curveUtils'
 export function applyCanvasFilter(
   canvas: HTMLCanvasElement,
   ctx: CanvasRenderingContext2D,
-  filterString: string
+  filterString: string,
 ): void {
   const tempCanvas = document.createElement('canvas')
   tempCanvas.width = canvas.width
@@ -29,7 +29,7 @@ export function applyCurvesToCanvas(
   ctx: CanvasRenderingContext2D,
   width: number,
   height: number,
-  curves: ColorCurves
+  curves: ColorCurves,
 ): void {
   const imageData = ctx.getImageData(0, 0, width, height)
   const data = imageData.data
@@ -64,7 +64,7 @@ export function applyPosterizeEffect(
   ctx: CanvasRenderingContext2D,
   width: number,
   height: number,
-  intensity: number
+  intensity: number,
 ): void {
   if (intensity <= 0) return
 
@@ -95,7 +95,7 @@ export function applyGrainEffect(
   width: number,
   height: number,
   intensity: number,
-  scaleFactor = 1
+  scaleFactor = 1,
 ): void {
   if (intensity <= 0) return
 
@@ -127,7 +127,7 @@ export function applyVignetteEffect(
   ctx: CanvasRenderingContext2D,
   width: number,
   height: number,
-  intensity: number
+  intensity: number,
 ): void {
   if (intensity <= 0) return
 
@@ -136,7 +136,14 @@ export function applyVignetteEffect(
   const centerY = height / 2
   const radius = Math.max(width, height) * 0.5
 
-  const gradient = ctx.createRadialGradient(centerX, centerY, radius * 0.3, centerX, centerY, radius)
+  const gradient = ctx.createRadialGradient(
+    centerX,
+    centerY,
+    radius * 0.3,
+    centerX,
+    centerY,
+    radius,
+  )
   gradient.addColorStop(0, 'rgba(0,0,0,0)')
   gradient.addColorStop(1, `rgba(0,0,0,${normalizedIntensity * 0.7})`)
 
@@ -151,7 +158,7 @@ export function applyVignetteEffect(
 export function buildCssFilterString(
   adjustments: Adjustments,
   filters: FilterSettings,
-  options?: { scaleFactor?: number }
+  options?: { scaleFactor?: number },
 ): string {
   const filterParts: string[] = []
   const scaleFactor = options?.scaleFactor ?? 1

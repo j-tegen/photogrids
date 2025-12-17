@@ -13,11 +13,9 @@ export async function processImageFile(file: File): Promise<{ file: File; url: s
         quality: 0.9,
       })
 
-      const convertedFile = new File(
-        [blob],
-        file.name.replace(/\.(heic|heif)$/i, '.jpg'),
-        { type: 'image/jpeg' },
-      )
+      const convertedFile = new File([blob], file.name.replace(/\.(heic|heif)$/i, '.jpg'), {
+        type: 'image/jpeg',
+      })
 
       return {
         file: convertedFile,

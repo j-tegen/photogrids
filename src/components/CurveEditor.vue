@@ -246,7 +246,7 @@ function handleDoubleClick(event: MouseEvent) {
 watch(
   () => [editorStore.curves, editorStore.activeCurveChannel],
   () => drawCurve(),
-  { deep: true }
+  { deep: true },
 )
 
 onMounted(() => {

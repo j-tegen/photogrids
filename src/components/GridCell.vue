@@ -193,11 +193,7 @@ const { startDrag: startPositionDrag, isDragging } = useDragHandlerCumulative({
 </script>
 
 <template>
-  <div
-    ref="cellRef"
-    class="grid-cell"
-    :style="{ ...cellStyle, ...borderStyle }"
-  >
+  <div ref="cellRef" class="grid-cell" :style="{ ...cellStyle, ...borderStyle }">
     <!-- Loading overlay -->
     <div v-if="isProcessing" class="loading-overlay">
       <Spin size="large" />
@@ -419,5 +415,4 @@ const { startDrag: startPositionDrag, isDragging } = useDragHandlerCumulative({
   justify-content: center;
   z-index: 20;
 }
-
 </style>

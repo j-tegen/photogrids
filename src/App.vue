@@ -1,9 +1,21 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { Layout, Card, Button, Dropdown, Menu, message } from 'ant-design-vue'
-import { ReloadOutlined, AppstoreOutlined, EditOutlined, DownloadOutlined } from '@ant-design/icons-vue'
-import { toPng, toJpeg } from 'html-to-image'
+import {
+  ReloadOutlined,
+  AppstoreOutlined,
+  EditOutlined,
+  DownloadOutlined,
+} from '@ant-design/icons-vue'
 import { downloadImage } from './utils/downloadImage'
+import {
+  calculateCanvasSize,
+  calculatePositions,
+  getCellBounds,
+  calculateImageDrawBounds,
+  loadImage,
+  drawGridLines,
+} from './utils/gridExport'
 import GridControls from './components/GridControls.vue'
 import PhotoGrid from './components/PhotoGrid.vue'
 import PhotoEditor from './components/PhotoEditor.vue'
@@ -20,7 +32,7 @@ const exportingGrid = ref(false)
 
 // Unified export state
 const canExport = computed(() => {
-  if (activeTab.value === 'grid') return photoGridRef.value?.gridRef != null
+  if (activeTab.value === 'grid') return gridStore.cells.some((cell) => cell.imageUrl)
   if (activeTab.value === 'editor') return photoEditorRef.value?.canExport
   return false
 })
@@ -37,32 +49,61 @@ const exportButtonText = computed(() => {
   return 'Export'
 })
 
-// Grid export logic (moved from ExportButton.vue)
+// Canvas-based grid export (works on iOS unlike html-to-image)
 async function exportGrid() {
-  const gridElement = photoGridRef.value?.gridRef
-  if (!gridElement) {
-    message.error('Grid element not found')
-    return
-  }
-
   exportingGrid.value = true
+
   try {
-    const photoGrid = gridElement.querySelector('.photo-grid') as HTMLElement
-    if (!photoGrid) {
-      throw new Error('Photo grid not found')
+    const canvasSize = calculateCanvasSize(gridStore.aspectRatio)
+    const canvas = document.createElement('canvas')
+    canvas.width = canvasSize.width
+    canvas.height = canvasSize.height
+    const ctx = canvas.getContext('2d')!
+
+    // Background
+    ctx.fillStyle = gridStore.backgroundColor
+    ctx.fillRect(0, 0, canvasSize.width, canvasSize.height)
+
+    // Calculate grid positions
+    const rowPositions = calculatePositions(gridStore.rowHeights, canvasSize.height)
+    const colPositions = calculatePositions(gridStore.columnWidths, canvasSize.width)
+
+    // Draw cells
+    for (const cell of gridStore.cells) {
+      if (!cell.imageUrl) continue
+
+      const img = await loadImage(cell.imageUrl)
+      const cellBounds = getCellBounds(cell, rowPositions, colPositions)
+      const imageSize = {
+        width: cell.imageNaturalWidth || img.naturalWidth,
+        height: cell.imageNaturalHeight || img.naturalHeight,
+      }
+      const drawBounds = calculateImageDrawBounds(
+        cellBounds,
+        imageSize,
+        cell.zoom,
+        cell.imagePosition,
+      )
+
+      // Clip to cell and draw
+      ctx.save()
+      ctx.beginPath()
+      ctx.rect(cellBounds.x, cellBounds.y, cellBounds.width, cellBounds.height)
+      ctx.clip()
+      ctx.drawImage(img, drawBounds.x, drawBounds.y, drawBounds.width, drawBounds.height)
+      ctx.restore()
     }
 
-    let dataUrl: string
-    if (exportFormat.value === 'png') {
-      dataUrl = await toPng(photoGrid, { quality: 1, pixelRatio: 2 })
-    } else {
-      dataUrl = await toJpeg(photoGrid, { quality: 0.95, pixelRatio: 2 })
-    }
+    // Grid lines
+    drawGridLines(ctx, gridStore.gridLines, rowPositions, colPositions, canvasSize)
 
+    // Export
     const timestamp = new Date().toISOString().slice(0, 19).replace(/[:.]/g, '-')
     const mimeType = exportFormat.value === 'png' ? 'image/png' : 'image/jpeg'
-    await downloadImage(dataUrl, `photo-grid-${timestamp}.${exportFormat.value}`, mimeType)
+    const quality = exportFormat.value === 'jpg' ? 0.95 : 1
+    const dataUrl = canvas.toDataURL(mimeType, quality)
 
+    await downloadImage(dataUrl, `photo-grid-${timestamp}.${exportFormat.value}`, mimeType)
     message.success(`Grid exported as ${exportFormat.value.toUpperCase()}`)
   } catch (error) {
     console.error('Export failed:', error)
@@ -283,13 +324,7 @@ function handleFormatChange(info: { key: string | number }) {
 body {
   margin: 0;
   font-family:
-    -apple-system,
-    BlinkMacSystemFont,
-    'Segoe UI',
-    Roboto,
-    'Helvetica Neue',
-    Arial,
-    sans-serif;
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 }
 
 .menu-item-active {
