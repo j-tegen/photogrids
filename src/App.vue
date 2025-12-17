@@ -96,14 +96,16 @@ function handleFormatChange(info: { key: string | number }) {
           @click="activeTab = 'grid'"
         >
           <AppstoreOutlined />
-          Grid View
+          <span class="tab-text-full">Grid View</span>
+          <span class="tab-text-short">Grid</span>
         </button>
         <button
           :class="['header-tab', { active: activeTab === 'editor' }]"
           @click="activeTab = 'editor'"
         >
           <EditOutlined />
-          Photo Editor
+          <span class="tab-text-full">Photo Editor</span>
+          <span class="tab-text-short">Editor</span>
         </button>
       </div>
       <Dropdown.Button
@@ -123,7 +125,7 @@ function handleFormatChange(info: { key: string | number }) {
           </Menu>
         </template>
         <DownloadOutlined />
-        {{ exportButtonText }}
+        <span class="export-text">{{ exportButtonText }}</span>
       </Dropdown.Button>
     </Layout.Header>
 
@@ -206,6 +208,10 @@ function handleFormatChange(info: { key: string | number }) {
   background: rgba(255, 255, 255, 0.15);
 }
 
+.tab-text-short {
+  display: none;
+}
+
 .app-body {
   flex: 1;
 }
@@ -252,6 +258,15 @@ function handleFormatChange(info: { key: string | number }) {
 
   .app-header h1 {
     display: none;
+  }
+
+  .tab-text-full,
+  .export-text {
+    display: none;
+  }
+
+  .tab-text-short {
+    display: inline;
   }
 
   .tab-content {
