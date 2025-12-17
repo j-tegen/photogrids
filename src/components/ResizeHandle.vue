@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useGridStore } from '@/stores/gridStore'
+import { useDragHandler } from '@/composables/useDragHandler'
 
 const props = defineProps<{
   type: 'row' | 'column'
@@ -8,8 +9,6 @@ const props = defineProps<{
 }>()
 
 const gridStore = useGridStore()
-const isDragging = ref(false)
-const startPos = ref(0)
 const containerSize = ref(0)
 
 function getContainerSize(target: HTMLElement) {
@@ -20,83 +19,31 @@ function getContainerSize(target: HTMLElement) {
   }
 }
 
-function handleMouseDown(event: MouseEvent) {
-  isDragging.value = true
-  startPos.value = props.type === 'row' ? event.clientY : event.clientX
-  getContainerSize(event.target as HTMLElement)
+// Use composable for drag handling - incremental delta variant
+const { startDrag, isDragging } = useDragHandler({
+  onStart: (event) => {
+    getContainerSize(event.originalEvent.target as HTMLElement)
+  },
+  onMove: (delta) => {
+    // Use the appropriate axis delta based on resize type
+    const axisDelta = props.type === 'row' ? delta.y : delta.x
+    const deltaPercent = (axisDelta / containerSize.value) * 100
 
-  document.addEventListener('mousemove', handleMouseMove)
-  document.addEventListener('mouseup', handleMouseUp)
-}
-
-function handleMouseMove(event: MouseEvent) {
-  if (!isDragging.value) return
-
-  const currentPos = props.type === 'row' ? event.clientY : event.clientX
-  const delta = currentPos - startPos.value
-  const deltaPercent = (delta / containerSize.value) * 100
-
-  if (props.type === 'row') {
-    gridStore.updateRowHeight(props.index, deltaPercent)
-  } else {
-    gridStore.updateColumnWidth(props.index, deltaPercent)
-  }
-
-  startPos.value = currentPos
-}
-
-function handleMouseUp() {
-  isDragging.value = false
-  document.removeEventListener('mousemove', handleMouseMove)
-  document.removeEventListener('mouseup', handleMouseUp)
-}
-
-// Touch event handlers for mobile
-function handleTouchStart(event: TouchEvent) {
-  if (event.touches.length !== 1) return
-  const touch = event.touches[0]
-  if (!touch) return
-
-  isDragging.value = true
-  startPos.value = props.type === 'row' ? touch.clientY : touch.clientX
-  getContainerSize(event.target as HTMLElement)
-
-  document.addEventListener('touchmove', handleTouchMove, { passive: false })
-  document.addEventListener('touchend', handleTouchEnd)
-}
-
-function handleTouchMove(event: TouchEvent) {
-  if (!isDragging.value || event.touches.length !== 1) return
-  const touch = event.touches[0]
-  if (!touch) return
-
-  const currentPos = props.type === 'row' ? touch.clientY : touch.clientX
-  const delta = currentPos - startPos.value
-  const deltaPercent = (delta / containerSize.value) * 100
-
-  if (props.type === 'row') {
-    gridStore.updateRowHeight(props.index, deltaPercent)
-  } else {
-    gridStore.updateColumnWidth(props.index, deltaPercent)
-  }
-
-  startPos.value = currentPos
-  event.preventDefault() // Prevent scrolling while dragging
-}
-
-function handleTouchEnd() {
-  isDragging.value = false
-  document.removeEventListener('touchmove', handleTouchMove)
-  document.removeEventListener('touchend', handleTouchEnd)
-}
+    if (props.type === 'row') {
+      gridStore.updateRowHeight(props.index, deltaPercent)
+    } else {
+      gridStore.updateColumnWidth(props.index, deltaPercent)
+    }
+  },
+})
 </script>
 
 <template>
   <div
     class="resize-handle"
     :class="[`resize-handle--${type}`, { 'resize-handle--active': isDragging }]"
-    @mousedown="handleMouseDown"
-    @touchstart="handleTouchStart"
+    @mousedown="startDrag"
+    @touchstart="startDrag"
   />
 </template>
 

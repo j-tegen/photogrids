@@ -83,9 +83,6 @@ function handleThicknessChange(val: number | [number, number]) {
     <div class="control-row">
       <label>Rows</label>
       <InputNumber :value="gridStore.rows" :min="2" :max="4" @change="handleRowsChange" />
-    </div>
-
-    <div class="control-row">
       <label>Columns</label>
       <InputNumber :value="gridStore.columns" :min="2" :max="4" @change="handleColumnsChange" />
     </div>
@@ -113,8 +110,6 @@ function handleThicknessChange(val: number | [number, number]) {
           :max="100"
           @change="handleCustomAspectRatioChange"
         />
-      </div>
-      <div class="control-row">
         <label>Height</label>
         <InputNumber
           v-model:value="customHeight"
@@ -132,9 +127,6 @@ function handleThicknessChange(val: number | [number, number]) {
     <div class="control-row">
       <label>Inner Lines</label>
       <Switch :checked="gridStore.gridLines.showInnerLines" @change="handleInnerLinesChange" />
-    </div>
-
-    <div class="control-row">
       <label>Edges</label>
       <Switch :checked="gridStore.gridLines.showEdges" @change="handleEdgesChange" />
     </div>
@@ -145,19 +137,26 @@ function handleThicknessChange(val: number | [number, number]) {
         :value="gridStore.gridLines.thickness"
         :min="1"
         :max="10"
-        style="width: 120px"
+        style="width: 100px"
         @change="handleThicknessChange"
       />
       <span class="value-label">{{ gridStore.gridLines.thickness }}px</span>
-    </div>
-
-    <div class="control-row">
       <label>Color</label>
       <input
         type="color"
         :value="gridStore.gridLines.color"
         class="color-input"
         @input="(e) => gridStore.updateGridLines({ color: (e.target as HTMLInputElement).value })"
+      />
+    </div>
+
+    <div class="control-row">
+      <label>Background</label>
+      <input
+        type="color"
+        :value="gridStore.backgroundColor"
+        class="color-input"
+        @input="(e) => gridStore.setBackgroundColor((e.target as HTMLInputElement).value)"
       />
     </div>
   </div>

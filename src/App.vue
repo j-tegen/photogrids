@@ -1,131 +1,154 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, computed } from 'vue'
-import { Layout, Card, Button, Drawer, Tabs, Dropdown, Menu } from 'ant-design-vue'
-import { ReloadOutlined, MenuOutlined, AppstoreOutlined, ScissorOutlined, DownOutlined } from '@ant-design/icons-vue'
+import { ref, computed } from 'vue'
+import { Layout, Card, Button, Dropdown, Menu, message } from 'ant-design-vue'
+import { ReloadOutlined, AppstoreOutlined, EditOutlined, DownloadOutlined } from '@ant-design/icons-vue'
+import { toPng, toJpeg } from 'html-to-image'
+import { downloadImage } from './utils/downloadImage'
 import GridControls from './components/GridControls.vue'
 import PhotoGrid from './components/PhotoGrid.vue'
-import ExportButton from './components/ExportButton.vue'
-import PhotoSplitter from './components/PhotoSplitter.vue'
+import PhotoEditor from './components/PhotoEditor.vue'
 import { useGridStore } from './stores/gridStore'
 import type { ExportFormat } from './utils/splitterExport'
 
 const gridStore = useGridStore()
 const photoGridRef = ref<InstanceType<typeof PhotoGrid> | null>(null)
+const photoEditorRef = ref<InstanceType<typeof PhotoEditor> | null>(null)
 
-const MOBILE_BREAKPOINT = 768
-const isMobile = ref(window.innerWidth < MOBILE_BREAKPOINT)
-const drawerVisible = ref(false)
 const activeTab = ref('grid')
 const exportFormat = ref<ExportFormat>('png')
+const exportingGrid = ref(false)
 
-const showSidebar = computed(() => activeTab.value === 'grid')
+// Unified export state
+const canExport = computed(() => {
+  if (activeTab.value === 'grid') return photoGridRef.value?.gridRef != null
+  if (activeTab.value === 'editor') return photoEditorRef.value?.canExport
+  return false
+})
 
-function handleResize() {
-  isMobile.value = window.innerWidth < MOBILE_BREAKPOINT
-  if (!isMobile.value) {
-    drawerVisible.value = false
+const isExporting = computed(() => {
+  if (activeTab.value === 'grid') return exportingGrid.value
+  if (activeTab.value === 'editor') return photoEditorRef.value?.isExporting
+  return false
+})
+
+const exportButtonText = computed(() => {
+  if (activeTab.value === 'grid') return `Export ${exportFormat.value.toUpperCase()}`
+  if (activeTab.value === 'editor') return photoEditorRef.value?.exportLabel ?? 'Export'
+  return 'Export'
+})
+
+// Grid export logic (moved from ExportButton.vue)
+async function exportGrid() {
+  const gridElement = photoGridRef.value?.gridRef
+  if (!gridElement) {
+    message.error('Grid element not found')
+    return
+  }
+
+  exportingGrid.value = true
+  try {
+    const photoGrid = gridElement.querySelector('.photo-grid') as HTMLElement
+    if (!photoGrid) {
+      throw new Error('Photo grid not found')
+    }
+
+    let dataUrl: string
+    if (exportFormat.value === 'png') {
+      dataUrl = await toPng(photoGrid, { quality: 1, pixelRatio: 2 })
+    } else {
+      dataUrl = await toJpeg(photoGrid, { quality: 0.95, pixelRatio: 2 })
+    }
+
+    const timestamp = new Date().toISOString().slice(0, 19).replace(/[:.]/g, '-')
+    const mimeType = exportFormat.value === 'png' ? 'image/png' : 'image/jpeg'
+    await downloadImage(dataUrl, `photo-grid-${timestamp}.${exportFormat.value}`, mimeType)
+
+    message.success(`Grid exported as ${exportFormat.value.toUpperCase()}`)
+  } catch (error) {
+    console.error('Export failed:', error)
+    message.error('Failed to export grid')
+  } finally {
+    exportingGrid.value = false
   }
 }
 
-onMounted(() => {
-  window.addEventListener('resize', handleResize)
-})
+// Unified export handler
+async function handleExport() {
+  if (activeTab.value === 'grid') {
+    await exportGrid()
+  } else if (activeTab.value === 'editor') {
+    await photoEditorRef.value?.handleExport()
+  }
+}
 
-onUnmounted(() => {
-  window.removeEventListener('resize', handleResize)
-})
+function handleFormatChange(info: { key: string | number }) {
+  exportFormat.value = String(info.key) as ExportFormat
+}
 </script>
 
 <template>
   <Layout class="app-layout">
     <Layout.Header class="app-header">
-      <Button
-        v-if="isMobile && showSidebar"
-        type="text"
-        class="menu-btn"
-        @click="drawerVisible = true"
-      >
-        <template #icon><MenuOutlined /></template>
-      </Button>
       <h1>Photo Tools</h1>
-      <div class="header-spacer" />
-      <Dropdown :trigger="['click']">
-        <Button type="text" class="format-btn">
-          Export: {{ exportFormat.toUpperCase() }}
-          <DownOutlined />
-        </Button>
+      <div class="header-tabs">
+        <button
+          :class="['header-tab', { active: activeTab === 'grid' }]"
+          @click="activeTab = 'grid'"
+        >
+          <AppstoreOutlined />
+          Grid View
+        </button>
+        <button
+          :class="['header-tab', { active: activeTab === 'editor' }]"
+          @click="activeTab = 'editor'"
+        >
+          <EditOutlined />
+          Photo Editor
+        </button>
+      </div>
+      <Dropdown.Button
+        type="primary"
+        :disabled="!canExport"
+        :loading="isExporting"
+        @click="handleExport"
+      >
         <template #overlay>
-          <Menu @click="(info: { key: string | number }) => exportFormat = String(info.key) as ExportFormat">
-            <Menu.Item key="png" :class="{ 'menu-item-active': exportFormat === 'png' }">PNG</Menu.Item>
-            <Menu.Item key="jpg" :class="{ 'menu-item-active': exportFormat === 'jpg' }">JPG</Menu.Item>
+          <Menu @click="handleFormatChange">
+            <Menu.Item key="png" :class="{ 'menu-item-active': exportFormat === 'png' }">
+              Export as PNG
+            </Menu.Item>
+            <Menu.Item key="jpg" :class="{ 'menu-item-active': exportFormat === 'jpg' }">
+              Export as JPG
+            </Menu.Item>
           </Menu>
         </template>
-      </Dropdown>
+        <DownloadOutlined />
+        {{ exportButtonText }}
+      </Dropdown.Button>
     </Layout.Header>
 
     <Layout class="app-body">
-      <!-- Desktop sidebar - only for grid view -->
-      <Layout.Sider v-if="!isMobile && showSidebar" width="300" theme="light" class="app-sider">
-        <GridControls />
-
-        <div class="sider-footer">
-          <Button block @click="gridStore.resetGrid">
-            <template #icon><ReloadOutlined /></template>
-            Reset Grid
-          </Button>
-        </div>
-      </Layout.Sider>
-
-      <!-- Mobile drawer - only for grid view -->
-      <Drawer
-        v-if="showSidebar"
-        v-model:open="drawerVisible"
-        placement="left"
-        title="Settings"
-        :width="300"
-      >
-        <GridControls />
-
-        <div class="drawer-footer">
-          <Button block @click="gridStore.resetGrid">
-            <template #icon><ReloadOutlined /></template>
-            Reset Grid
-          </Button>
-        </div>
-      </Drawer>
-
       <Layout.Content class="app-content">
-        <Tabs v-model:activeKey="activeTab" class="app-tabs" centered>
-          <Tabs.TabPane key="grid">
-            <template #tab>
-              <span class="tab-label">
-                <AppstoreOutlined />
-                Grid View
-              </span>
-            </template>
-            <div class="tab-content">
-              <Card class="grid-card">
-                <PhotoGrid ref="photoGridRef" />
-              </Card>
-
-              <div class="export-container">
-                <ExportButton :grid-element="photoGridRef?.gridRef ?? null" :format="exportFormat" />
-              </div>
+        <!-- Grid View -->
+        <div v-if="activeTab === 'grid'" class="tab-content">
+          <Card class="grid-card">
+            <PhotoGrid ref="photoGridRef" />
+          </Card>
+          <Card class="grid-controls-card">
+            <GridControls />
+            <div class="controls-footer">
+              <Button block @click="gridStore.resetGrid">
+                <template #icon><ReloadOutlined /></template>
+                Reset Grid
+              </Button>
             </div>
-          </Tabs.TabPane>
+          </Card>
+        </div>
 
-          <Tabs.TabPane key="splitter">
-            <template #tab>
-              <span class="tab-label">
-                <ScissorOutlined />
-                Photo Splitter
-              </span>
-            </template>
-            <div class="tab-content">
-              <PhotoSplitter :export-format="exportFormat" />
-            </div>
-          </Tabs.TabPane>
-        </Tabs>
+        <!-- Photo Editor -->
+        <div v-if="activeTab === 'editor'" class="tab-content">
+          <PhotoEditor ref="photoEditorRef" :export-format="exportFormat" />
+        </div>
       </Layout.Content>
     </Layout>
   </Layout>
@@ -151,57 +174,40 @@ onUnmounted(() => {
   font-weight: 500;
 }
 
-.header-spacer {
+.header-tabs {
+  display: flex;
+  align-items: center;
+  gap: 4px;
   flex: 1;
+  justify-content: center;
 }
 
-.format-btn {
-  color: rgba(255, 255, 255, 0.85);
-  font-size: 14px;
+.header-tab {
   display: flex;
   align-items: center;
   gap: 6px;
+  padding: 8px 16px;
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.65);
+  font-size: 14px;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: all 0.2s;
 }
 
-.format-btn:hover {
+.header-tab:hover {
   color: #fff;
+  background: rgba(255, 255, 255, 0.1);
 }
 
-.menu-btn {
+.header-tab.active {
   color: #fff;
-  font-size: 18px;
-}
-
-.menu-btn:hover {
-  color: #40a9ff;
-}
-
-.drawer-footer {
-  padding: 16px 0;
-  margin-top: 24px;
-  border-top: 1px solid #f0f0f0;
+  background: rgba(255, 255, 255, 0.15);
 }
 
 .app-body {
   flex: 1;
-}
-
-.app-sider {
-  border-right: 1px solid #f0f0f0;
-  display: flex;
-  flex-direction: column;
-}
-
-.app-sider :deep(.ant-layout-sider-children) {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-}
-
-.sider-footer {
-  padding: 16px;
-  margin-top: auto;
-  border-top: 1px solid #f0f0f0;
 }
 
 .app-content {
@@ -209,26 +215,6 @@ onUnmounted(() => {
   background: #f5f5f5;
   display: flex;
   flex-direction: column;
-}
-
-.app-tabs {
-  flex: 1;
-}
-
-.app-tabs :deep(.ant-tabs-nav) {
-  background: #fff;
-  margin-bottom: 0;
-  padding: 0 16px;
-}
-
-.app-tabs :deep(.ant-tabs-content-holder) {
-  background: #f5f5f5;
-}
-
-.tab-label {
-  display: flex;
-  align-items: center;
-  gap: 8px;
 }
 
 .tab-content {
@@ -241,21 +227,31 @@ onUnmounted(() => {
 
 .grid-card {
   width: 100%;
-  max-width: 600px;
+  max-width: 760px;
 }
 
 .grid-card :deep(.ant-card-body) {
   padding: 24px;
 }
 
-.export-container {
-  display: flex;
-  justify-content: center;
+.grid-controls-card {
+  width: 100%;
+  max-width: 760px;
+}
+
+.controls-footer {
+  padding: 16px;
+  border-top: 1px solid #f0f0f0;
+  margin-top: 16px;
 }
 
 @media (max-width: 767px) {
   .app-header {
     padding: 0 16px;
+  }
+
+  .app-header h1 {
+    display: none;
   }
 
   .tab-content {
@@ -284,5 +280,13 @@ body {
 .menu-item-active {
   background-color: #e6f4ff;
   font-weight: 500;
+}
+
+/* Disabled export button styling for dark header */
+.app-header .ant-dropdown-button > .ant-btn:disabled,
+.app-header .ant-dropdown-button > .ant-btn-group > .ant-btn:disabled {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.4);
 }
 </style>

@@ -1,4 +1,5 @@
 import type { CropArea, Rotation } from '@/types/splitter'
+import { downloadImage } from './downloadImage'
 
 export type ExportFormat = 'png' | 'jpg'
 
@@ -119,13 +120,10 @@ function splitCanvas(
   return slices
 }
 
-function downloadCanvas(canvas: HTMLCanvasElement, filename: string, format: ExportFormat): void {
-  const link = document.createElement('a')
-  link.download = filename
-  link.href = format === 'png'
-    ? canvas.toDataURL('image/png')
-    : canvas.toDataURL('image/jpeg', 0.95)
-  link.click()
+async function downloadCanvas(canvas: HTMLCanvasElement, filename: string, format: ExportFormat): Promise<void> {
+  const mimeType = format === 'png' ? 'image/png' : 'image/jpeg'
+  const dataUrl = canvas.toDataURL(mimeType, format === 'jpg' ? 0.95 : 1)
+  await downloadImage(dataUrl, filename, mimeType)
 }
 
 export async function exportSplits(options: ExportOptions): Promise<void> {
@@ -146,8 +144,8 @@ export async function exportSplits(options: ExportOptions): Promise<void> {
   for (let i = 0; i < slices.length; i++) {
     const slice = slices[i]
     if (slice) {
-      downloadCanvas(slice, `split-${i + 1}-${timestamp}.${format}`, format)
-      // Small delay between downloads
+      await downloadCanvas(slice, `split-${i + 1}-${timestamp}.${format}`, format)
+      // Small delay between downloads (on iOS, each triggers a share dialog)
       if (i < slices.length - 1) {
         await new Promise((resolve) => setTimeout(resolve, 300))
       }

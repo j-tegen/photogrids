@@ -20,6 +20,9 @@ function createInitialCells(rows: number, cols: number): GridCell[] {
         imageUrl: null,
         imageFile: null,
         imagePosition: { x: 50, y: 50 },
+        zoom: 1,
+        imageNaturalWidth: null,
+        imageNaturalHeight: null,
       })
     }
   }
@@ -46,6 +49,7 @@ export const useGridStore = defineStore('grid', () => {
     thickness: 2,
     color: '#000000',
   })
+  const backgroundColor = ref('#f5f5f5')
 
   // Computed
   const gridTemplateRows = computed(() => {
@@ -116,6 +120,24 @@ export const useGridStore = defineStore('grid', () => {
       cell.imageFile = file
       cell.imageUrl = url
       cell.imagePosition = { x: 50, y: 50 } // Reset position when changing image
+      cell.zoom = 1 // Reset zoom when changing image
+      cell.imageNaturalWidth = null // Will be set when image loads
+      cell.imageNaturalHeight = null
+    }
+  }
+
+  function updateCellImageDimensions(cellId: string, width: number, height: number) {
+    const cell = cells.value.find((c) => c.id === cellId)
+    if (cell) {
+      cell.imageNaturalWidth = width
+      cell.imageNaturalHeight = height
+    }
+  }
+
+  function updateCellZoom(cellId: string, zoom: number) {
+    const cell = cells.value.find((c) => c.id === cellId)
+    if (cell) {
+      cell.zoom = Math.max(0.5, Math.min(3, zoom))
     }
   }
 
@@ -169,6 +191,10 @@ export const useGridStore = defineStore('grid', () => {
     gridLines.value = { ...gridLines.value, ...settings }
   }
 
+  function setBackgroundColor(color: string) {
+    backgroundColor.value = color
+  }
+
   function resetGrid() {
     rows.value = 3
     columns.value = 3
@@ -182,6 +208,7 @@ export const useGridStore = defineStore('grid', () => {
       thickness: 2,
       color: '#000000',
     }
+    backgroundColor.value = '#f5f5f5'
   }
 
   return {
@@ -193,6 +220,7 @@ export const useGridStore = defineStore('grid', () => {
     columnWidths,
     aspectRatio,
     gridLines,
+    backgroundColor,
     // Computed
     gridTemplateRows,
     gridTemplateColumns,
@@ -203,11 +231,14 @@ export const useGridStore = defineStore('grid', () => {
     setColumns,
     deleteCell,
     updateCellImage,
+    updateCellImageDimensions,
+    updateCellZoom,
     updateCellImagePosition,
     updateRowHeight,
     updateColumnWidth,
     setAspectRatio,
     updateGridLines,
+    setBackgroundColor,
     resetGrid,
   }
 })

@@ -12,6 +12,9 @@ export interface GridCell {
   imageUrl: string | null
   imageFile: File | null
   imagePosition: ImagePosition
+  zoom: number // 1.0 = 100%, range 0.5-3.0
+  imageNaturalWidth: number | null
+  imageNaturalHeight: number | null
 }
 
 export interface GridLineSettings {
