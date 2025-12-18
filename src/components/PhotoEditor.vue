@@ -1547,7 +1547,19 @@ defineExpose({
 
 @media (max-width: 767px) {
   .photo-editor {
-    padding: 12px;
+    padding: 0;
+  }
+
+  .toolbar-card,
+  .preview-card,
+  .controls-card {
+    border-radius: 0;
+  }
+
+  .toolbar-card :deep(.ant-card),
+  .preview-card :deep(.ant-card),
+  .controls-card :deep(.ant-card) {
+    border-radius: 0;
   }
 
   .toolbar-card :deep(.ant-card-body) {

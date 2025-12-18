@@ -311,7 +311,17 @@ function handleFormatChange(info: { key: string | number }) {
   }
 
   .tab-content {
-    padding: 16px;
+    padding: 0;
+  }
+
+  .grid-card,
+  .grid-controls-card {
+    border-radius: 0;
+  }
+
+  .grid-card :deep(.ant-card),
+  .grid-controls-card :deep(.ant-card) {
+    border-radius: 0;
   }
 
   .grid-card :deep(.ant-card-body) {
